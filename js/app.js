@@ -2,7 +2,7 @@ const BLOBS={"logo": "img/logo.jpg", "wm": "img/wm.png", "bg": "img/bg.jpg", "m1
 const $=s=>document.querySelector(s),ar=s=>String(s).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
 const cart=new Map();
 document.querySelectorAll("[data-b]").forEach(e=>{e.src=BLOBS[e.dataset.b]});$(".hero").style.backgroundImage="url("+BLOBS.bg+")";
-const IMG=BLOBS.IMG,CAT={"وجبات البروست":"br","وجبات الستريبس":"st","برجر بيف":"bf","برجر تشيكن":"bc","تويستر":"tw"},PIC={"ميكس بوكس":"mix","تشانكي بوكس":"ch","تشيكن باستا":"pa","فتة زنجر":"fz","تشك تشيكن":"tk","ماك أند تشيز":"mc","بافلو وينجز 6 قطع":"wg","بافلو وينجز 12 قطعة":"wg","تشيز ستريبس":"cs","تشيز فرايز":"cf","فرنش فرايز":"cf","كرنكل فرايز":"cu","جار جبنة سايحة":"jar","أونيون رينجز":"on","كومبو بطاطس وحاجة ساقعة":"cb"};
+const IMG=BLOBS.IMG,CAT={"وجبات البروست":"br","وجبات الستريبس":"st","برجر بيف":"bf","برجر تشيكن":"bc","تويستر":"tw"},PIC={"ميكس بوكس":"mix","تشانكي بوكس":"ch","تشيكن باستا":"pa","فتة زنجر":"fz","تشك تشيكن":"tk","ماك أند تشيز":"mc","بافلو وينجز 1 قطع":"wg","بافلو وينجز 6 قطع":"wg","بافلو وينجز 12 قطعة":"wg","تشيز ستريبس":"cs","تشيز فرايز":"cf","فرنش فرايز":"cf","كرنكل فرايز":"cu","جار جبنة سايحة":"jar","أونيون رينجز":"on","كومبو بطاطس وحاجة ساقعة":"cb"};
 const pic=(n,c,im)=>{const u=im?(BLOBS[im]||BLOBS.IMG[im]||im):(CAT[c]?"":BLOBS.IMG[PIC[n]]);return u?`<img class="th" src="${u}" alt="" loading="lazy">`:""};
 let pend;
 const addCart=(k,p)=>{const i=cart.get(k)||{n:k,p,q:0};i.q++;cart.set(k,i);draw()};
@@ -52,7 +52,7 @@ function adrFx(){const o=$("#area").value==="",a=$("#ad");a.classList.toggle("hl
 $("#area").onchange=()=>{draw();adrFx()};
 $("#noteBtn").onclick=()=>{const n=$("#note");n.hidden=!n.hidden;if(!n.hidden)n.focus()};
 const src=o=>BLOBS.IMG[o.img]||o.img;
-function offersDraw(){$("#offers").hidden=!S.offers.length;$("#offerList").innerHTML=S.offers.map(o=>`<article class="offer">${o.img?`<img src="${src(o)}" alt="${esc(o.n)}" loading="lazy">`:""}<div><b>${ar(esc(o.n))}</b><b class="pr">${ar(+o.p\vert{}\vert{}0)} جنيه</b></div>${o.d?`<div><span>${ar(esc(o.d))}</span></div>`:""}<div><button class="btn add-o" data-n="${esc(o.n)}" data-p="${+o.p||0}" data-s="${+o.s||0}" data-sp="${+o.sp||0}">أضف للطلب</button></div></article>`).join("")}
+function offersDraw(){$("#offers").hidden=!S.offers.length;$("#offerList").innerHTML=S.offers.map(o=>`<article class="offer">${o.img?`<img src="${src(o)}" alt="${esc(o.n)}" loading="lazy">`:""}<div><b>${ar(esc(o.n))}</b><b class="pr">${ar(+o.p||0)} جنيه</b></div>${o.d?`<div><span>${ar(esc(o.d))}</span></div>`:""}<div><button class="btn add-o" data-n="${esc(o.n)}" data-p="${+o.p||0}" data-s="${+o.s||0}" data-sp="${+o.sp||0}">أضف للطلب</button></div></article>`).join("")}
 const AR="مناطق التوصيل",OF="العروض",SA="صوصات الاكسترا",MSA="صوصات الوجبات",SI="صور الموقع والمنيو الورقي",GH="إعدادات GitHub";let adm;
 const rows=()=>adm===GH||adm===SI?[]:adm===AR?S.areas:adm===SA?S.sauces:adm===MSA?S.msauces:adm===OF?S.offers:S.menu[adm];
 const rd=f=>new Promise(r=>{const R=new FileReader();R.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,640/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=i.width*k;c.height=i.height*k;c.getContext("2d").drawImage(i,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.78))};i.src=R.result};R.readAsDataURL(f)});
@@ -98,4 +98,73 @@ async function ghSave(){const c=ghClean(ghCfg());if(!c.owner||!c.repo||!c.token)
  const api="https://api.github.com/repos/"+c.owner+"/"+c.repo+"/contents/js/menu-data.js",H={Authorization:"Bearer "+c.token,Accept:"application/vnd.github+json"};
  let sha;const g=await fetch(api+"?ref="+encodeURIComponent(c.branch),{headers:H});
  if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error("GitHub "+g.status+(g.status===401?" (التوكن غلط أو منتهي)":g.status===403?" (التوكن من غير صلاحية Contents)":""));
- const body={message:"Update menu from admin panel",content:u8b64
+ const body={message:"Update menu from admin panel",content:u8b64("window.MENU_DATA="+JSON.stringify(S)+";\n"),branch:c.branch};if(sha)body.sha=sha;
+ const p=await fetch(api,{method:"PUT",headers:{...H,"Content-Type":"application/json"},body:JSON.stringify(body)});
+ if(!p.ok)throw new Error("GitHub "+p.status+(p.status===404?" (اسم المستودع أو الفرع غلط)":p.status===403||p.status===401?" (راجع صلاحيات التوكن)":""))}
+async function ghFixSite(){const c=ghClean(ghCfg());if(location.protocol!=="https:"||/^(localhost|127\.)/.test(location.hostname))return false;
+ const base=location.origin+location.pathname.replace(/[^/]*$/,""),api="https://api.github.com/repos/"+c.owner+"/"+c.repo+"/contents/index.html",H={Authorization:"Bearer "+c.token,Accept:"application/vnd.github+json"};
+ const g=await fetch(api+"?ref="+encodeURIComponent(c.branch),{headers:H});if(!g.ok)return false;const j=await g.json();
+ const txt=new TextDecoder().decode(Uint8Array.from(atob(String(j.content).replace(/\s/g,"")),x=>x.charCodeAt(0)));
+ if(!txt.includes("__SITE_URL__"))return false;
+ const p=await fetch(api,{method:"PUT",headers:{...H,"Content-Type":"application/json"},body:JSON.stringify({message:"Set site URL for link previews",content:u8b64(txt.split("__SITE_URL__").join(base)),sha:j.sha,branch:c.branch})});return p.ok}
+$("#admSave").onclick=async()=>{
+ const m=$("#admMsg");
+ for(const c in S.menu)S.menu[c]=S.menu[c].filter(r=>String(r[0]).trim());
+ S.areas=S.areas.filter(r=>String(r[0]).trim());S.sauces=S.sauces.filter(r=>String(r[0]).trim());S.msauces=S.msauces.filter(r=>String(r[0]).trim());S.offers=S.offers.filter(o=>String(o.n).trim());
+ init();m.textContent="بنحفظ على GitHub…";
+ try{await ghSave();const fx=await ghFixSite().catch(()=>false);m.textContent="اتحفظ على GitHub. التعديل هيظهر لكل الزباين خلال دقيقة تقريبًا."+(fx?" وتم ضبط رابط صورة معاينة اللينك.":"")}catch(e){m.textContent="الحفظ مشتغلش: "+(e&&e.name==="TypeError"?"مقدرتش أوصل لـ GitHub. اتأكد إن خانة المستودع فيها اسم المستودع بس (chunky) من غير اسم الحساب، وإن النت شغال، ومفيش VPN أو مانع إعلانات.":e.message)}
+};
+$("#admX").onclick=()=>$("#admD").close();
+const PH="5c2be6f638d471f666ab5dd0604d28336ebe976967ba4914319689e4d2f3928f",sha=async s=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)))].map(x=>x.toString(16).padStart(2,"0")).join("");
+$("#admBtn").onclick=()=>{$("#pw").value="";$("#pwE").textContent="";$("#pwD").showModal();$("#pw").focus()};
+const enter=async()=>{let g="";try{g=await sha($("#pw").value)}catch(e){}if(g===PH){$("#pwD").close();admDraw();$("#admD").showModal()}else $("#pwE").textContent="الباسورد غلط."};
+$("#saOk").onclick=()=>{const P=pend;if(P.mode==="s"){const nx=P.next,v=P.sel[0];$("#saD").close();nx(v);return}let k=P.n,pr=P.p;if(P.mode==="w")k+=" ["+P.slots.map(o=>o.s+" ("+o.p+")").join("، ")+"]";else if(P.mode==="r"){if(P.sel.length)k+=" [من غير: "+P.sel.join(" + ")+"]"}else{
+  const counts={};
+  P.sel.forEach(v=>counts[v]=(counts[v]||0)+1);
+  const selFormatted=Object.entries(counts).map(([v,cnt])=>cnt>1?v+" (×"+cnt+")":v);
+  k+=" ["+selFormatted.join(" + ")+"]";
+  if(P.mode==="x")pr=P.p*P.sel.length;
+}addCart(k,pr);$("#saD").close()};$("#saX").onclick=()=>$("#saD").close();
+$("#pwOk").onclick=enter;$("#pw").onkeydown=e=>{if(e.key==="Enter")enter()};
+
+init();
+function draw(){
+ const a=[...cart.values()],n=a.reduce((s,i)=>s+i.q,0),t=a.reduce((s,i)=>s+i.q*i.p,0);
+ const f=feeOf(),x=$("#area").value==="x";$("#cnt").textContent=ar(n);$("#tot").textContent=ar(t+(f||0));$("#sub").textContent=ar(t);$("#fee").textContent=x?"اختار منطقتك":f==null?"هنتفق عليه":ar(f)+" جنيه";$("#sum").textContent=ar(t+(f||0));$("#fab").hidden=!n;
+ $("#lines").innerHTML=a.length?a.map(i=>`<li><span>${ar(i.n)}</span><span class="q"><button data-q="${i.n}" data-d="-1" aria-label="أقل">−</button> ${ar(i.q)} <button data-q="${i.n}" data-d="1" aria-label="أكتر">+</button></span><b>${ar(i.q*i.p)}</b></li>`).join(""):"<li>السلة فاضية. ضيف حاجة من المنيو.</li>";
+ if(!n&&$("#cartD").open)$("#cartD").close();
+}
+document.addEventListener("click",e=>{
+ const b=e.target.closest("button");if(!b)return;
+ if(b.dataset.w){const[k,f,v]=b.dataset.w.split("|");pend.slots[+k][f]=v;pkDraw()}
+ else if(b.dataset.sa){
+  const P=pend,x=b.dataset.sa;
+  if(P.mode==="s")P.sel=[x];
+  else if(P.mode==="x"){P.sel.push(x)}
+  else{
+   const need=Math.min(P.s,P.list.length);
+   if(P.sel.length<need){P.sel.push(x)}
+   else{
+    const idx=P.sel.indexOf(x);
+    if(idx>-1)P.sel.splice(idx,1);
+    else{P.sel.pop();P.sel.push(x);}
+   }
+  }
+  pkDraw();
+ }
+ else if(b.dataset.p){add(b.dataset)}
+ else if(b.dataset.q){const i=cart.get(b.dataset.q);i.q+=+b.dataset.d;if(i.q<1)cart.delete(b.dataset.q);draw()}
+ else if(b.dataset.zoom){$("#zimg").src=BLOBS[b.dataset.zoom];$("#zoomD").showModal()}
+});
+$("#zoomD").onclick=()=>$("#zoomD").close();
+$("#fab").onclick=()=>$("#cartD").showModal();
+$("#close").onclick=()=>$("#cartD").close();
+$("#send").onclick=()=>{
+ const a=[...cart.values()],t=a.reduce((s,i)=>s+i.q*i.p,0),nm=$("#nm").value.trim(),ph=$("#ph").value.trim(),ad=$("#ad").value.trim();
+ const f=feeOf(),nt=$("#note").value.trim();if($("#area").value==="x"){$("#err").textContent="اختار منطقة التوصيل.";return}if(!nm||!ph||!ad){$("#err").textContent="اكتب الاسم ورقم التليفون والعنوان.";return}
+ $("#err").textContent="";
+ const L=a.map((i,k)=>`${k+1}) ${i.n} × ${i.q} = ${i.q*i.p} جنيه`).join("\n");
+ const msg=ar(`طلب جديد من موقع تشانكي\n\n${L}\n\nالمنتجات: ${t} جنيه\nالتوصيل (${$("#area").selectedOptions[0].dataset.n}): ${f==null?"هنتفق عليه":f+" جنيه"}\nالإجمالي: ${t+(f||0)} جنيه\n\n${nm?"الاسم: "+nm+"\n":""}التليفون: ${ph}\nالعنوان: ${ad}${nt?"\nملاحظات: "+nt:""}`);
+ window.open("https://wa.me/201211211424?text="+encodeURIComponent(msg),"_blank");
+};
+document.querySelectorAll(".add-o").forEach(b=>b.classList.add("add-o"));
