@@ -37,5 +37,6 @@ Menu item fields: name, description, price, number of sauces (`-1` = customer pi
 ## Good to know
 - Change the admin password: run `echo -n "NewPassword" | sha256sum` and put the result in `PH` near the top of the admin section in `js/app.js`.
 - Order WhatsApp number: search `201211211424` in `index.html` and `js/app.js`.
+- In the GitHub tab, the repo field is just the repository name (for example `chunky`), not `owner/chunky`. The panel now accepts both, but a wrong name makes GitHub answer 404 and the browser shows "Failed to fetch".
 - If saving fails, the message under the buttons says why (wrong token, missing Contents permission, wrong repo or branch name).
 - Anyone who knows the admin password and has the token on their browser can edit the menu, so keep the token private.

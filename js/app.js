@@ -64,15 +64,17 @@ $("#admD").onclick=e=>{const b=e.target.closest("button");if(!b)return;
 const lsGet=k=>{try{return localStorage.getItem(k)||""}catch(e){return ""}};
 function ghCfg(){const m=location.hostname.match(/^([^.]+)\.github\.io$/),seg=location.pathname.split("/").filter(Boolean)[0];
  return{owner:lsGet("ghOwner")||(m?m[1]:""),repo:lsGet("ghRepo")||(m?(seg&&!/\.html?$/.test(seg)?seg:m[1]+".github.io"):""),branch:lsGet("ghBranch")||"main",token:lsGet("ghToken")}}
+const ghClean=c=>{let o=String(c.owner||"").trim(),r=String(c.repo||"").trim().replace(/^https?:\/\/github\.com\//i,"").replace(/\.git$/,"").replace(/\/+$/,"");const p=r.split("/").filter(Boolean);if(p.length>=2){o=p[0];r=p[1]}else r=p[0]||"";
+ return{owner:o.replace(/\s+/g,""),repo:r.replace(/\s+/g,""),branch:String(c.branch||"main").trim()||"main",token:String(c.token||"").replace(/\s+/g,"")}};
 const u8b64=s=>{const b=new TextEncoder().encode(s);let x="";for(let i=0;i<b.length;i+=32768)x+=String.fromCharCode.apply(null,b.subarray(i,i+32768));return btoa(x)};
-async function ghSave(){const c=ghCfg();if(!c.owner||!c.repo||!c.token)throw new Error("اكمل إعدادات GitHub (الحساب، المستودع، التوكن)");
+async function ghSave(){const c=ghClean(ghCfg());if(!c.owner||!c.repo||!c.token)throw new Error("اكمل إعدادات GitHub (الحساب، المستودع، التوكن)");
  const api="https://api.github.com/repos/"+c.owner+"/"+c.repo+"/contents/js/menu-data.js",H={Authorization:"Bearer "+c.token,Accept:"application/vnd.github+json"};
  let sha;const g=await fetch(api+"?ref="+encodeURIComponent(c.branch),{headers:H});
  if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error("GitHub "+g.status+(g.status===401?" (التوكن غلط أو منتهي)":g.status===403?" (التوكن من غير صلاحية Contents)":""));
  const body={message:"Update menu from admin panel",content:u8b64("window.MENU_DATA="+JSON.stringify(S)+";\n"),branch:c.branch};if(sha)body.sha=sha;
  const p=await fetch(api,{method:"PUT",headers:{...H,"Content-Type":"application/json"},body:JSON.stringify(body)});
  if(!p.ok)throw new Error("GitHub "+p.status+(p.status===404?" (اسم المستودع أو الفرع غلط)":p.status===403||p.status===401?" (راجع صلاحيات التوكن)":""))}
-async function ghFixSite(){const c=ghCfg();if(location.protocol!=="https:"||/^(localhost|127\.)/.test(location.hostname))return false;
+async function ghFixSite(){const c=ghClean(ghCfg());if(location.protocol!=="https:"||/^(localhost|127\.)/.test(location.hostname))return false;
  const base=location.origin+location.pathname.replace(/[^/]*$/,""),api="https://api.github.com/repos/"+c.owner+"/"+c.repo+"/contents/index.html",H={Authorization:"Bearer "+c.token,Accept:"application/vnd.github+json"};
  const g=await fetch(api+"?ref="+encodeURIComponent(c.branch),{headers:H});if(!g.ok)return false;const j=await g.json();
  const txt=new TextDecoder().decode(Uint8Array.from(atob(String(j.content).replace(/\s/g,"")),x=>x.charCodeAt(0)));
@@ -83,7 +85,7 @@ $("#admSave").onclick=async()=>{
  for(const c in S.menu)S.menu[c]=S.menu[c].filter(r=>String(r[0]).trim());
  S.areas=S.areas.filter(r=>String(r[0]).trim());S.sauces=S.sauces.filter(r=>String(r[0]).trim());S.msauces=S.msauces.filter(r=>String(r[0]).trim());S.offers=S.offers.filter(o=>String(o.n).trim());
  init();m.textContent="بنحفظ على GitHub…";
- try{await ghSave();const fx=await ghFixSite().catch(()=>false);m.textContent="اتحفظ على GitHub. التعديل هيظهر لكل الزباين خلال دقيقة تقريبًا."+(fx?" وتم ضبط رابط صورة معاينة اللينك.":"")}catch(e){m.textContent="الحفظ مشتغلش: "+e.message}
+ try{await ghSave();const fx=await ghFixSite().catch(()=>false);m.textContent="اتحفظ على GitHub. التعديل هيظهر لكل الزباين خلال دقيقة تقريبًا."+(fx?" وتم ضبط رابط صورة معاينة اللينك.":"")}catch(e){m.textContent="الحفظ مشتغلش: "+(e&&e.name==="TypeError"?"مقدرتش أوصل لـ GitHub. اتأكد إن خانة المستودع فيها اسم المستودع بس (chunky) من غير اسم الحساب، وإن النت شغال، ومفيش VPN أو مانع إعلانات.":e.message)}
 };
 $("#admX").onclick=()=>$("#admD").close();
 const PH="5c2be6f638d471f666ab5dd0604d28336ebe976967ba4914319689e4d2f3928f",sha=async s=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)))].map(x=>x.toString(16).padStart(2,"0")).join("");
