@@ -32,7 +32,9 @@ function show(c){cur=c;const ck=CAT[c];
  if(S.customCIMG&&S.customCIMG[c])cImgUrl=S.customCIMG[c];
  $("#catHead").innerHTML=cImgUrl?`<figure class="cimg"><img src="${cImgUrl}" alt="${esc(c)}"></figure>`+(HINT[c]?`<p class="hint">${HINT[c]}</p>`:""):(HINT[c]?`<p class="hint">${HINT[c]}</p>`:"");
  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.textContent===c));
- $("#list").innerHTML=S.menu[c].map(([n,d,p,s,ing,g,sp,im])=>`<li>${pic(n,c,im)}<div><b>${ar(n)}</b>${d?`<small>${ar(d)}</small>`:""}</div><span class="pr">${ar(p)} جنيه</span><button class="add" data-n="${esc(n)}" data-p="${p}" data-s="${s||0}" data-g="${g||""}" data-r="${esc(ing||"")}" data-sp="${sp?1:0}" aria-label="أضف ${n}">+</button></li>`).join("");
+ if(S.menu[c]){
+  $("#list").innerHTML=S.menu[c].map(([n,d,p,s,ing,g,sp,im])=>`<li>${pic(n,c,im)}<div><b>${ar(n)}</b>${d?`<small>${ar(d)}</small>`:""}</div><span class="pr">${ar(p)} جنيه</span><button class="add" data-n="${esc(n)}" data-p="${p}" data-s="${s||0}" data-g="${g||""}" data-r="${esc(ing||"")}" data-sp="${sp?1:0}" aria-label="أضف ${n}">+</button></li>`).join("");
+ }else{$("#list").innerHTML="";}
 }
 let cur,S=JSON.parse(JSON.stringify(window.MENU_DATA||{}));
 for(const k of["offers","sauces","msauces","areas"])S[k]=S[k]||[];S.menu=S.menu||{};S.customCIMG=S.customCIMG||{};S.customBLOBS=S.customBLOBS||{};
@@ -46,25 +48,37 @@ function init(){
  const k=$("#area").value||"x";
  $("#area").innerHTML='<option value="x" disabled selected>اختار منطقتك</option>'+S.areas.map(([n,f])=>`<option value="${esc(n)}" data-n="${esc(n)}" data-f="${+f||0}">${ar(esc(n))} — ${ar(+f||0)} جنيه</option>`).join("")+'<option value="" data-n="منطقة تانية">منطقة تانية (التوصيل هنتفق عليه)</option>';
  $("#area").value=[...$("#area").options].some(o=>o.value===k)?k:"x";
- show(S.menu[cur]?cur:Object.keys(S.menu)[0]);offersDraw();draw();
+ const menuKeys=Object.keys(S.menu);
+ show(S.menu[cur]?cur:menuKeys[0]);offersDraw();draw();
 }
 function adrFx(){const o=$("#area").value==="",a=$("#ad");a.classList.toggle("hl",o);a.rows=o?3:2;a.placeholder=o?"اكتب اسم المنطقة وعنوانك بالتفصيل":"العنوان بالتفصيل (الشارع، رقم العمارة...)";$("#adH").hidden=!o;if(o)a.focus()}
 $("#area").onchange=()=>{draw();adrFx()};
 $("#noteBtn").onclick=()=>{const n=$("#note");n.hidden=!n.hidden;if(!n.hidden)n.focus()};
 const src=o=>BLOBS.IMG[o.img]||o.img;
 function offersDraw(){$("#offers").hidden=!S.offers.length;$("#offerList").innerHTML=S.offers.map(o=>`<article class="offer">${o.img?`<img src="${src(o)}" alt="${esc(o.n)}" loading="lazy">`:""}<div><b>${ar(esc(o.n))}</b><b class="pr">${ar(+o.p||0)} جنيه</b></div>${o.d?`<div><span>${ar(esc(o.d))}</span></div>`:""}<div><button class="btn add-o" data-n="${esc(o.n)}" data-p="${+o.p||0}" data-s="${+o.s||0}" data-sp="${+o.sp||0}">أضف للطلب</button></div></article>`).join("")}
-const AR="مناطق التوصيل",OF="العروض",SA="صوصات الاكسترا",MSA="صوصات الوجبات",SI="صور الموقع والمنيو الورقي",GH="إعدادات GitHub";let adm;
-const rows=()=>adm===GH||adm===SI?[]:adm===AR?S.areas:adm===SA?S.sauces:adm===MSA?S.msauces:adm===OF?S.offers:S.menu[adm];
+const AR="مناطق التوصيل",OF="العروض",SA="صوصات الاكسترا",MSA="صوصات الوجبات",CAT_TAB="الأقسام",SI="صور الموقع والمنيو الورقي",GH="إعدادات GitHub";let adm;
+const rows=()=>adm===GH||adm===SI||adm===CAT_TAB?[]:adm===AR?S.areas:adm===SA?S.sauces:adm===MSA?S.msauces:adm===OF?S.offers:S.menu[adm];
 const rd=f=>new Promise(r=>{const R=new FileReader();R.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,640/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=i.width*k;c.height=i.height*k;c.getContext("2d").drawImage(i,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.78))};i.src=R.result};R.readAsDataURL(f)});
 function admDraw(){
- adm=adm||Object.keys(S.menu)[0];
- $("#admTabs").innerHTML=[...Object.keys(S.menu),OF,MSA,SA,AR,SI,GH].map(c=>`<button aria-selected="${c===adm}" data-c="${esc(c)}">${c}</button>`).join("");
+ const menuKeys=Object.keys(S.menu);
+ if(!menuKeys.includes(adm) && adm!==OF && adm!==MSA && adm!==SA && adm!==AR && adm!==CAT_TAB && adm!==SI && adm!==GH) {
+  adm=menuKeys[0];
+ }
+ $("#admTabs").innerHTML=[...menuKeys,CAT_TAB,OF,MSA,SA,AR,SI,GH].map(c=>`<button aria-selected="${c===adm}" data-c="${esc(c)}">${c}</button>`).join("");
  if(adm===GH){const c=ghCfg();$("#admBody").innerHTML='<p>التعديلات بتتحفظ على GitHub (ملف js/menu-data.js). ادخل البيانات مرة واحدة، وبتتحفظ على جهازك بس.</p>'+[["ghOwner","اسم حساب GitHub (owner)",c.owner],["ghRepo","اسم المستودع (repo)",c.repo],["ghBranch","الفرع (branch)",c.branch]].map(([id,l,v])=>`<label for="${id}">${l}</label><input id="${id}" value="${esc(v)}" autocomplete="off">`).join("")+'<label for="ghToken">التوكن (Fine-grained، صلاحية Contents: Read and write)</label><input id="ghToken" type="password" value="'+esc(c.token)+'" autocomplete="off">';return}
+ if(adm===CAT_TAB){
+  let h='<p>إدارة أسامي أقسام المنيو (تعديل، حذف، أو إضافة قسم جديد):</p>';
+  Object.keys(S.menu).forEach((cat)=>{
+   h+=`<div class="ar"><input type="text" data-oldcat="${esc(cat)}" value="${esc(cat)}"><button data-delcat="${esc(cat)}">حذف القسم</button></div>`;
+  });
+  h+='<div style="margin-top:1rem;display:flex;gap:.5rem;"><input type="text" id="newCatName" placeholder="اسم القسم الجديد" style="flex:1"><button class="btn y" id="addCatBtn" type="button">إضافة قسم جديد</button></div>';
+  $("#admBody").innerHTML=h;return;
+ }
  if(adm===SI){
   let h='<p>تعديل صور بانرات الأقسام وصور المنيو الورقي:</p>';
   Object.keys(S.menu).forEach(cat=>{
    const curImg=S.customCIMG&&S.customCIMG[cat]?S.customCIMG[cat]:(CAT[cat]?BLOBS.CIMG[CAT[cat]]:"");
-   h+=`<div class="of"><b>قسم: ${cat}</b><br>${curImg?`<img class="th" src="${curImg}" alt="">`:""}<input type="file" accept="image/*" data-catimg="${cat}">${curImg?`<button data-rmcatimg="${cat}">حذف بانر القسم</button>`:""}</div>`;
+   h+=`<div class="of"><b>قسم: ${cat}</b><br>${curImg?`<img class="th" src="${curImg}" alt="">`:""}<input type="file" accept="image/*" data-catimg="${esc(cat)}">${curImg?`<button data-rmcatimg="${esc(cat)}">حذف بانر القسم</button>`:""}</div>`;
   });
   ["m1","m2"].forEach(mKey=>{
    const mImg=BLOBS[mKey]||"";
@@ -75,19 +89,63 @@ function admDraw(){
  const f=(i,k,v,x="")=>`<input data-i="${i}" data-k="${k}" value="${esc(v)}"${x}>`,N=' type="number"';
  $("#admBody").innerHTML=(adm===OF?S.offers.map((o,i)=>`<div class="of">${o.img?`<img class="th" src="${src(o)}" alt="">`:""}<div class="ar">${f(i,"n",o.n,' placeholder="اسم العرض"')}${f(i,"p",o.p,N+' placeholder="السعر"')}${f(i,"s",o.s||0,N+' placeholder="عدد الصوص"')}${f(i,"sp",o.sp||0,N+' placeholder="سبايسي؟ (1=نعم)"')}</div><div class="ar">${f(i,"d",o.d||"",' placeholder="الوصف"')}</div><div class="ar"><input type="file" accept="image/*" data-up="${i}">${o.img?`<button data-rm="${i}">شيل الصورة</button>`:""}<button data-del="${i}">حذف العرض</button></div></div>`).join(""):rows().map((r,i)=>`<div class="ar">${adm!==AR&&adm!==SA&&adm!==MSA?pic(r[0],adm,r[7]):""}${f(i,0,r[0],' placeholder="الاسم"')}${adm===AR?f(i,1,r[1],N+' placeholder="الرسوم"'):adm===SA||adm===MSA?"":f(i,1,r[1],' placeholder="الوصف"')+f(i,2,r[2],N+' placeholder="السعر"')+f(i,3,r[3]||0,N+' placeholder="صوص (-1 = حر)" title="عدد الصوصات المضمنة. -1 = الزبون يختار أي عدد والسعر لكل صوص"')+f(i,4,r[4]||"",' placeholder="مكونات بفاصلة + (مثل جبنة + بصل)"')+f(i,6,r[6]||0,N+' placeholder="سبايسي؟ (1=نعم)"')+`<input type="file" accept="image/*" data-up="${i}">`+(r[7]?`<button data-rm="${i}">شيل الصورة</button>`:"")}<button data-del="${i}" aria-label="حذف">×</button></div>`).join(""))+'<button class="btn" data-new="1">+ إضافة</button>';
 }
-$("#admBody").oninput=e=>{const t=e.target;if(t.id&&t.id.startsWith("gh")){try{localStorage.setItem(t.id,t.value)}catch(_){}return}const r=rows()[t.dataset.i];if(r)r[t.dataset.k]=t.type==="number"?+t.value:t.value};
+$("#admBody").oninput=e=>{
+ const t=e.target;
+ if(t.id&&t.id.startsWith("gh")){try{localStorage.setItem(t.id,t.value)}catch(_){}return}
+ if(t.dataset.oldcat!==undefined){
+  const oldName=t.dataset.oldcat;
+  const newName=t.value.trim();
+  if(newName && oldName!==newName && !S.menu[newName]){
+   S.menu[newName]=S.menu[oldName];
+   delete S.menu[oldName];
+   t.dataset.oldcat=newName;
+   if(S.customCIMG && S.customCIMG[oldName]){
+    S.customCIMG[newName]=S.customCIMG[oldName];
+    delete S.customCIMG[oldName];
+   }
+   if(adm===oldName) adm=newName;
+   init();
+  }
+  return;
+ }
+ const r=rows()[t.dataset.i];if(r)r[t.dataset.k]=t.type==="number"?+t.value:t.value;
+};
 $("#admBody").onchange=async e=>{
  const t=e.target;
  if(t.dataset.up!==undefined&&t.files[0]){const im=await rd(t.files[0]);if(adm===OF)S.offers[+t.dataset.up].img=im;else rows()[+t.dataset.up][7]=im;admDraw()}
  else if(t.dataset.catimg&&t.files[0]){const im=await rd(t.files[0]);S.customCIMG=S.customCIMG||{};S.customCIMG[t.dataset.catimg]=im;if(CAT[t.dataset.catimg])BLOBS.CIMG[CAT[t.dataset.catimg]]=im;admDraw()}
  else if(t.dataset.blobimg&&t.files[0]){const im=await rd(t.files[0]);S.customBLOBS=S.customBLOBS||{};S.customBLOBS[t.dataset.blobimg]=im;BLOBS[t.dataset.blobimg]=im;document.querySelectorAll("[data-b]").forEach(el=>{if(el.dataset.b===t.dataset.blobimg)el.src=im});admDraw()}
 };
-$("#admD").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+$("#admD").onclick=e=>{
+ const b=e.target.closest("button");if(!b)return;
  if(b.dataset.c){adm=b.dataset.c;admDraw()}
  else if(b.dataset.del){rows().splice(+b.dataset.del,1);admDraw()}
+ else if(b.dataset.delcat){
+  const cat=b.dataset.delcat;
+  if(confirm("هل أنت متأكد من حذف القسم '"+cat+"' بكل محتوياته؟")){
+   delete S.menu[cat];
+   if(S.customCIMG) delete S.customCIMG[cat];
+   const menuKeys=Object.keys(S.menu);
+   adm=menuKeys.length?menuKeys[0]:OF;
+   init();
+   admDraw();
+  }
+ }
+ else if(b.id==="addCatBtn"){
+  const name=$("#newCatName").value.trim();
+  if(name && !S.menu[name]){
+   S.menu[name]=[];
+   adm=name;
+   init();
+   admDraw();
+  }else{
+   alert("اكتب اسم القسم أو تأكد أنه مش موجود قبل كدا.");
+  }
+ }
  else if(b.dataset.rm){if(adm===OF)S.offers[+b.dataset.rm].img="";else rows()[+b.dataset.rm][7]="";admDraw()}
  else if(b.dataset.rmcatimg){const cat=b.dataset.rmcatimg;if(S.customCIMG)delete S.customCIMG[cat];admDraw()}
- else if(b.dataset.new){rows().push(adm===AR?["",0]:adm===SA||adm===MSA?[""]:adm===OF?{n:"",d:"",p:0,s:0,sp:0,img:""}:["","",0,0,""]);admDraw()}};
+ else if(b.dataset.new){rows().push(adm===AR?["",0]:adm===SA||adm===MSA?[""]:adm===OF?{n:"",d:"",p:0,s:0,sp:0,img:""}:["","",0,0,""]);admDraw()}
+};
 const lsGet=k=>{try{return localStorage.getItem(k)||""}catch(e){return ""}};
 function ghCfg(){const m=location.hostname.match(/^([^.]+)\.github\.io$/),seg=location.pathname.split("/").filter(Boolean)[0];
  return{owner:lsGet("ghOwner")||(m?m[1]:""),repo:lsGet("ghRepo")||(m?(seg&&!/\.html?$/.test(seg)?seg:m[1]+".github.io"):""),branch:lsGet("ghBranch")||"main",token:lsGet("ghToken")}}
